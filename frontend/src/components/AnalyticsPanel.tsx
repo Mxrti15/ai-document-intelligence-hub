@@ -1,59 +1,62 @@
 import { useState } from "react";
-import { UsageAnalytics, getUsageAnalytics } from "../api/client";
+import { UsageAnalytics } from "../api/client";
 
 type AnalyticsPanelProps = {
+  analytics: UsageAnalytics | null;
   onError: (message: string) => void;
+  onRefresh: () => Promise<UsageAnalytics>;
 };
 
-export function AnalyticsPanel({ onError }: AnalyticsPanelProps) {
-  const [analytics, setAnalytics] = useState<UsageAnalytics | null>(null);
+const metrics = [
+  { key: "documents_uploaded", label: "Subidos" },
+  { key: "documents_processed", label: "Procesados" },
+  { key: "documents_failed", label: "Fallidos" },
+  { key: "total_tokens", label: "Tokens" },
+  { key: "estimated_cost", label: "Coste estimado" }
+] as const;
+
+export function AnalyticsPanel({ analytics, onError, onRefresh }: AnalyticsPanelProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleLoad() {
     try {
       setIsLoading(true);
-      setAnalytics(await getUsageAnalytics());
+      await onRefresh();
     } catch (error) {
-      onError(error instanceof Error ? error.message : "No se pudieron cargar las métricas.");
+      onError(error instanceof Error ? error.message : "No se pudieron cargar las metricas.");
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <section className="panel">
-      <div className="panel-header">
-        <h2>Analytics</h2>
-        <button onClick={handleLoad}>Ver analytics</button>
+    <section className="card">
+      <div className="card-header compact">
+        <div>
+          <span className="section-kicker">Uso</span>
+          <h2>Analytics</h2>
+        </div>
+        <button className="button button-secondary" disabled={isLoading} onClick={handleLoad}>
+          Actualizar analytics
+        </button>
       </div>
-      {isLoading ? <p className="loading-text">Cargando...</p> : null}
-      {analytics ? (
-        <>
-          <div className="metric-grid">
-            <div>
-              <span>Subidos</span>
-              <strong>{analytics.documents_uploaded}</strong>
-            </div>
-            <div>
-              <span>Procesados</span>
-              <strong>{analytics.documents_processed}</strong>
-            </div>
-            <div>
-              <span>Fallidos</span>
-              <strong>{analytics.documents_failed}</strong>
-            </div>
-            <div>
-              <span>Tokens</span>
-              <strong>{analytics.total_tokens}</strong>
-            </div>
-            <div>
-              <span>Coste</span>
-              <strong>{analytics.estimated_cost}</strong>
-            </div>
+
+      {isLoading ? <p className="loading-text">Cargando metricas...</p> : null}
+
+      <div className="metric-grid">
+        {metrics.map((metric) => (
+          <div className="metric-card" key={metric.key}>
+            <strong>
+              {metric.key === "estimated_cost"
+                ? `$${Number(analytics?.[metric.key] ?? 0).toFixed(4)}`
+                : (analytics?.[metric.key] ?? "--")}
+            </strong>
+            <span>{metric.label}</span>
           </div>
-          <pre>{JSON.stringify(analytics, null, 2)}</pre>
-        </>
-      ) : null}
+        ))}
+      </div>
+
+      <p className="microcopy">Todavia usando analisis mock, sin coste real de IA.</p>
     </section>
   );
 }
