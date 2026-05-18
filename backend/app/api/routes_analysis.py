@@ -9,7 +9,8 @@ from app.db.database import get_db
 from app.db.models import AIUsage, Document, DocumentAnalysis
 from app.schemas.analysis import AnalyzeDocumentResponse, DocumentAnalysisResponse
 from app.services.analysis_service import analyze_document_text
-from app.services.document_parser import DocumentParserError, extract_text_from_pdf
+from app.services.document_parser import DocumentParserError, extract_text_from_pdf_bytes
+from app.services.storage_service import StorageError, read_document_bytes
 
 
 router = APIRouter(tags=["analysis"])
@@ -69,10 +70,11 @@ def _analyze_document(document: Document, db: Session) -> AnalyzeDocumentRespons
     db.refresh(document)
 
     try:
-        text = extract_text_from_pdf(document.storage_path)
+        file_bytes = read_document_bytes(document.storage_path)
+        text = extract_text_from_pdf_bytes(file_bytes)
         analysis_result = analyze_document_text(text, document.original_filename)
         analysis, usage = _save_analysis_result(document, analysis_result, db)
-    except DocumentParserError as exc:
+    except (DocumentParserError, StorageError, OSError) as exc:
         document.status = "failed"
         db.commit()
         raise HTTPException(

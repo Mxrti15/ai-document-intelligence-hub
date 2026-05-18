@@ -1,3 +1,4 @@
+from io import BytesIO
 from pathlib import Path
 
 from pypdf import PdfReader
@@ -13,8 +14,15 @@ def extract_text_from_pdf(file_path: str) -> str:
     if not path.exists():
         raise DocumentParserError("PDF file not found.")
 
+    return extract_text_from_pdf_bytes(path.read_bytes())
+
+
+def extract_text_from_pdf_bytes(file_bytes: bytes) -> str:
+    if not file_bytes:
+        raise DocumentParserError("PDF file is empty.")
+
     try:
-        reader = PdfReader(path)
+        reader = PdfReader(BytesIO(file_bytes))
         page_texts = [page.extract_text() or "" for page in reader.pages]
     except PdfReadError as exc:
         raise DocumentParserError("PDF file is corrupted or cannot be read.") from exc

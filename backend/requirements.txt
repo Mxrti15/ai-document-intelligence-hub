@@ -11,3 +11,5 @@ httpx
 pytest
 pytest-asyncio
 ruff
+azure-storage-blob
+azure-identity

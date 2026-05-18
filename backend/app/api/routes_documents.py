@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db.models import Document
 from app.schemas.document import DocumentListResponse, DocumentResponse
+from app.services.storage_service import delete_document as delete_stored_document
 from app.services.storage_service import save_uploaded_file
 
 
@@ -68,6 +69,7 @@ def delete_document(document_id: int, db: Session = Depends(get_db)) -> Document
             detail="Document not found.",
         )
 
+    delete_stored_document(document.storage_path)
     document.status = "deleted"
     db.commit()
     db.refresh(document)

@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     local_storage_path: str = "./data/documents"
     max_upload_size_mb: int = 10
     allowed_extensions: str = "pdf"
+    azure_storage_account_name: str | None = None
+    azure_storage_container_name: str = "documents"
+    azure_client_id: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env",
