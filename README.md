@@ -762,6 +762,65 @@ El deploy real pide confirmacion explicita escribiendo `DEPLOY`.
 ## Validacion esperada
 
 - `az bicep build` compila `infra/main.bicep`.
-- `az deployment group validate` funciona cuando existe `AZURE_SQL_ADMIN_PASSWORD`.
+- `az deployment group validate` funciona sin gestionar passwords SQL desde Bicep.
 - `az deployment group what-if` permite revisar cambios antes de desplegar.
 - `pytest`, `ruff` y `pnpm build` siguen pasando.
+
+# FASE9 - GitHub Actions CI/CD
+
+## Estado
+
+Amarillo: workflows y scripts preparados para CI/CD con OIDC, sin secretos de cliente.
+
+La Fase 9 añade automatizacion para validar el proyecto y desplegar una nueva imagen del backend en Azure Container Apps.
+
+## Workflows
+
+```text
+.github/workflows/ci.yml
+.github/workflows/deploy-containerapp.yml
+.github/workflows/bicep-check.yml
+```
+
+## Que valida CI
+
+- Backend: `pytest`.
+- Backend: `ruff check`.
+- Frontend: `pnpm build`.
+- Docker: build de la imagen del backend.
+- Bicep: build de `infra/main.bicep`.
+
+## Deploy
+
+El workflow de deploy usa OIDC con `azure/login@v2`.
+
+No usa:
+
+- client secrets;
+- publish profiles;
+- `AZURE_CREDENTIALS` con password.
+
+El pipeline solo actualiza la imagen:
+
+```text
+az containerapp update --image
+```
+
+No modifica secrets ni variables de entorno de Container Apps y no ejecuta analisis automatico para evitar consumo de Azure OpenAI.
+
+## Scripts
+
+```powershell
+.\scripts\azure\phase9-oidc-setup.ps1 -GitHubOwner <owner> -GitHubRepo <repo>
+.\scripts\azure\phase9-oidc-validate.ps1 -GitHubOwner <owner> -GitHubRepo <repo>
+```
+
+Variables esperadas en GitHub:
+
+```text
+AZURE_CLIENT_ID
+AZURE_TENANT_ID
+AZURE_SUBSCRIPTION_ID
+```
+
+Son identificadores, no passwords.

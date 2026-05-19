@@ -1,1 +1,15 @@
+name: Deprecated Deploy Dev
 
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notice:
+    name: Use deploy-containerapp
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notice
+        run: echo "Use .github/workflows/deploy-containerapp.yml for Phase 9 deployments."

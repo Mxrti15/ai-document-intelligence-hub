@@ -1,0 +1,31 @@
+name: Bicep Check
+
+on:
+  pull_request:
+    paths:
+      - infra/**
+      - scripts/azure/phase8-bicep-*.ps1
+      - .github/workflows/bicep-check.yml
+  push:
+    branches:
+      - main
+    paths:
+      - infra/**
+      - .github/workflows/bicep-check.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Bicep
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure CLI Bicep build
+        uses: azure/cli@v2
+        with:
+          inlineScript: az bicep build --file infra/main.bicep
