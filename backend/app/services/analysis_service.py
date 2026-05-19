@@ -1,7 +1,10 @@
 from typing import Any
 
+from app.core.config import settings
+from app.services.openai_service import analyze_document_with_azure_openai
 
-def analyze_document_text(text: str, filename: str) -> dict[str, Any]:
+
+def analyze_document_with_mock(text: str, filename: str) -> dict[str, Any]:
     normalized_text = text.lower()
 
     document_type = "unknown"
@@ -30,3 +33,10 @@ def analyze_document_text(text: str, filename: str) -> dict[str, Any]:
             "latency_ms": 0,
         },
     }
+
+
+def analyze_document_text(text: str, filename: str) -> dict[str, Any]:
+    if settings.ai_analysis_provider == "azure_openai":
+        return analyze_document_with_azure_openai(text, filename)
+
+    return analyze_document_with_mock(text, filename)

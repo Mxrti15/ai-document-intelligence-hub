@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.core.config import settings
+from app.db.database import check_database_ready
 
 
 router = APIRouter()
@@ -16,4 +17,5 @@ def health_check() -> dict[str, str]:
 
 @router.get("/ready")
 def readiness_check() -> dict[str, str]:
+    check_database_ready()
     return {"status": "ready"}

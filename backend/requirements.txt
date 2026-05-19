@@ -13,3 +13,5 @@ pytest-asyncio
 ruff
 azure-storage-blob
 azure-identity
+pyodbc
+openai

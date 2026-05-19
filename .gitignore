@@ -6,6 +6,7 @@ venv/
 backend/data/
 *.db
 .pytest_cache/
+pytest-cache-files-*/
 .ruff_cache/
 .DS_Store
 node_modules/

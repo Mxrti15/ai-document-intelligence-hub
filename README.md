@@ -526,3 +526,95 @@ SQLite sigue siendo efimero dentro del contenedor hasta Fase 4. En esta fase se 
 - El PDF aparece en el container `documents`.
 - Se puede analizar el documento leyendo bytes desde Blob Storage.
 - `pytest`, `ruff` y `pnpm build` siguen pasando.
+
+# FASE4 - Azure SQL Database
+
+## Estado
+
+Amarillo: preparada para desplegar y validar.
+
+La Fase 4 sustituye SQLite efimero por Azure SQL Database cuando la app corre con:
+
+```env
+DATABASE_MODE=azure_sql
+AZURE_SQL_SERVER=<server>.database.windows.net
+AZURE_SQL_DATABASE=aidocinteldb
+AZURE_SQL_USERNAME=aidocadmin
+AZURE_SQL_PASSWORD=secretref:sql-password
+```
+
+La app en Azure queda con:
+
+```text
+PDFs -> Azure Blob Storage
+Metadatos, analisis y metricas -> Azure SQL Database
+Backend -> Azure Container Apps
+```
+
+## Scripts
+
+```powershell
+.\scripts\azure\phase4-sql-deploy.ps1
+.\scripts\azure\phase4-sql-validate.ps1
+```
+
+## Limitacion
+
+Fase 4 usa SQL authentication temporal como paso intermedio. En Fase 6 se movera a Key Vault y Managed Identity.
+
+Azure SQL puede generar coste aunque no haya trafico. Para limpiar todo:
+
+```powershell
+.\scripts\azure\phase2-cleanup.ps1
+```
+
+# FASE5 - Azure OpenAI
+
+## Estado
+
+Amarillo: preparada para desplegar y validar.
+
+La Fase 5 sustituye el analisis mock por analisis real con Azure OpenAI cuando la app corre con:
+
+```env
+AI_ANALYSIS_PROVIDER=azure_openai
+AZURE_OPENAI_ENDPOINT=https://<recurso>.openai.azure.com/
+AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4o
+AZURE_OPENAI_AUTH_MODE=managed_identity
+```
+
+En local se mantiene:
+
+```env
+AI_ANALYSIS_PROVIDER=mock
+```
+
+La app en Azure queda con:
+
+```text
+PDFs -> Azure Blob Storage
+Texto extraido -> Azure OpenAI
+Resultado estructurado y tokens -> Azure SQL Database
+Backend -> Azure Container Apps
+```
+
+## Scripts
+
+```powershell
+.\scripts\azure\phase5-openai-deploy.ps1
+.\scripts\azure\phase5-openai-validate.ps1
+```
+
+## Seguridad
+
+No se usan API keys ni se guardan secretos en el repositorio. La Container App usa Managed Identity con el rol `Cognitive Services OpenAI User` sobre Azure OpenAI.
+
+## Validacion esperada
+
+- `/health` responde en Azure.
+- `/ready` responde en Azure.
+- Se puede subir un PDF a Blob Storage.
+- El analisis ya no devuelve `Resumen simulado...`.
+- `usage.total_tokens` es mayor que 0.
+- Analytics muestra tokens acumulados.
+- Los resultados se guardan en Azure SQL.
