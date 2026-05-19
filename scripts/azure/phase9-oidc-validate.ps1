@@ -41,7 +41,7 @@ function Assert-RoleAssignment {
         --assignee-object-id $PrincipalId `
         --scope $Scope `
         --query "[?roleDefinitionName=='$Role'] | length(@)" `
-        -o tsv `
+        --output tsv `
         --only-show-errors
 
     if ([int]$count -lt 1) {
@@ -57,25 +57,25 @@ if ($LASTEXITCODE -ne 0) {
     throw "Unable to select subscription $SubscriptionId."
 }
 
-$tenantId = Invoke-NativeOutput az account show --query tenantId -o tsv --only-show-errors
-$subscriptionId = Invoke-NativeOutput az account show --query id -o tsv --only-show-errors
+$tenantId = Invoke-NativeOutput az account show --query tenantId --output tsv --only-show-errors
+$subscriptionId = Invoke-NativeOutput az account show --query id --output tsv --only-show-errors
 
 Write-Step "Validating app registration and service principal"
 $appId = Invoke-NativeOutput az ad app list `
     --display-name $AppDisplayName `
     --query "[0].appId" `
-    -o tsv `
+    --output tsv `
     --only-show-errors
 
 if ([string]::IsNullOrWhiteSpace($appId)) {
     throw "App registration not found: $AppDisplayName"
 }
 
-$objectId = Invoke-NativeOutput az ad app show --id $appId --query id -o tsv --only-show-errors
+$objectId = Invoke-NativeOutput az ad app show --id $appId --query id --output tsv --only-show-errors
 $servicePrincipalObjectId = Invoke-NativeOutput az ad sp list `
     --filter "appId eq '$appId'" `
     --query "[0].id" `
-    -o tsv `
+    --output tsv `
     --only-show-errors
 
 if ([string]::IsNullOrWhiteSpace($servicePrincipalObjectId)) {
@@ -87,7 +87,7 @@ $subject = "repo:${GitHubOwner}/${GitHubRepo}:ref:refs/heads/${Branch}"
 $credentialCount = Invoke-NativeOutput az ad app federated-credential list `
     --id $objectId `
     --query "[?subject=='$subject' && issuer=='https://token.actions.githubusercontent.com'] | length(@)" `
-    -o tsv `
+    --output tsv `
     --only-show-errors
 
 if ([int]$credentialCount -lt 1) {
@@ -97,11 +97,11 @@ if ([int]$credentialCount -lt 1) {
 Write-Host "OK: federated credential subject $subject"
 
 Write-Step "Validating Azure role assignments"
-$acrId = Invoke-NativeOutput az acr show --name $AcrName --resource-group $ResourceGroupName --query id -o tsv --only-show-errors
-$containerAppId = Invoke-NativeOutput az containerapp show --name $ContainerAppName --resource-group $ResourceGroupName --query id -o tsv --only-show-errors
+$acrId = Invoke-NativeOutput az acr show --name $AcrName --resource-group $ResourceGroupName --query id --output tsv --only-show-errors
+$containerAppId = Invoke-NativeOutput az containerapp show --name $ContainerAppName --resource-group $ResourceGroupName --query id --output tsv --only-show-errors
 
 Assert-RoleAssignment -PrincipalId $servicePrincipalObjectId -Role "AcrPush" -Scope $acrId
-Assert-RoleAssignment -PrincipalId $servicePrincipalObjectId -Role "Azure Container Apps Contributor" -Scope $containerAppId
+Assert-RoleAssignment -PrincipalId $servicePrincipalObjectId -Role "Container Apps Contributor" -Scope $containerAppId
 
 Write-Host ""
 Write-Host "OIDC validation completed."

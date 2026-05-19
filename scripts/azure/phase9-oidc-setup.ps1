@@ -57,7 +57,7 @@ function Ensure-RoleAssignment {
         --assignee-object-id $PrincipalId `
         --scope $Scope `
         --query "[?roleDefinitionName=='$Role'] | length(@)" `
-        -o tsv `
+        --output tsv `
         --only-show-errors
 
     if ([int]$existing -gt 0) {
@@ -78,38 +78,38 @@ New-Item -ItemType Directory -Force -Path $script:OutputsDir | Out-Null
 
 Write-Step "Reading Azure context"
 Invoke-Native az account set --subscription $SubscriptionId
-$tenantId = Invoke-NativeOutput az account show --query tenantId -o tsv --only-show-errors
-$subscriptionId = Invoke-NativeOutput az account show --query id -o tsv --only-show-errors
+$tenantId = Invoke-NativeOutput az account show --query tenantId --output tsv --only-show-errors
+$subscriptionId = Invoke-NativeOutput az account show --query id --output tsv --only-show-errors
 
 Write-Step "Creating or reusing Microsoft Entra application"
 $appId = Invoke-NativeOutput az ad app list `
     --display-name $AppDisplayName `
     --query "[0].appId" `
-    -o tsv `
+    --output tsv `
     --only-show-errors
 
 if ([string]::IsNullOrWhiteSpace($appId)) {
     $appId = Invoke-NativeOutput az ad app create `
         --display-name $AppDisplayName `
         --query appId `
-        -o tsv `
+        --output tsv `
         --only-show-errors
 }
 
-$objectId = Invoke-NativeOutput az ad app show --id $appId --query id -o tsv --only-show-errors
+$objectId = Invoke-NativeOutput az ad app show --id $appId --query id --output tsv --only-show-errors
 
 Write-Step "Creating or reusing service principal"
 $servicePrincipalObjectId = Invoke-NativeOutput az ad sp list `
     --filter "appId eq '$appId'" `
     --query "[0].id" `
-    -o tsv `
+    --output tsv `
     --only-show-errors
 
 if ([string]::IsNullOrWhiteSpace($servicePrincipalObjectId)) {
     $servicePrincipalObjectId = Invoke-NativeOutput az ad sp create `
         --id $appId `
         --query id `
-        -o tsv `
+        --output tsv `
         --only-show-errors
 }
 
@@ -119,7 +119,7 @@ $credentialName = "github-${GitHubOwner}-${GitHubRepo}-${Branch}".ToLowerInvaria
 $existingCredential = Invoke-NativeOutput az ad app federated-credential list `
     --id $objectId `
     --query "[?name=='$credentialName'] | length(@)" `
-    -o tsv `
+    --output tsv `
     --only-show-errors
 
 if ([int]$existingCredential -eq 0) {
@@ -143,18 +143,18 @@ $acrId = Invoke-NativeOutput az acr show `
     --name $AcrName `
     --resource-group $ResourceGroupName `
     --query id `
-    -o tsv `
+    --output tsv `
     --only-show-errors
 
 $containerAppId = Invoke-NativeOutput az containerapp show `
     --name $ContainerAppName `
     --resource-group $ResourceGroupName `
     --query id `
-    -o tsv `
+    --output tsv `
     --only-show-errors
 
 Ensure-RoleAssignment -PrincipalId $servicePrincipalObjectId -Role "AcrPush" -Scope $acrId
-Ensure-RoleAssignment -PrincipalId $servicePrincipalObjectId -Role "Azure Container Apps Contributor" -Scope $containerAppId
+Ensure-RoleAssignment -PrincipalId $servicePrincipalObjectId -Role "Container Apps Contributor" -Scope $containerAppId
 
 Write-Step "Writing non-secret GitHub Actions OIDC output"
 $output = [ordered]@{
