@@ -1,0 +1,39 @@
+param(
+    [string]$ResourceGroupName = "rg-ai-doc-intel-dev"
+)
+
+$ErrorActionPreference = "Stop"
+
+$script:Root = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+$script:TemplateFile = Join-Path $script:Root "infra\main.bicep"
+$script:ParametersFile = Join-Path $script:Root "infra\params\dev.bicepparam"
+
+function Write-Step {
+    param([string]$Message)
+    Write-Host ""
+    Write-Host "==> $Message"
+}
+
+function Invoke-Native {
+    param(
+        [Parameter(Mandatory = $true)][string]$FilePath,
+        [Parameter(ValueFromRemainingArguments = $true)][string[]]$ArgumentList
+    )
+
+    & $FilePath @ArgumentList
+    if ($LASTEXITCODE -ne 0) {
+        throw "Command failed with exit code ${LASTEXITCODE}: $FilePath $($ArgumentList -join ' ')"
+    }
+}
+
+Set-Location $script:Root
+
+Write-Step "Validating Bicep deployment"
+Invoke-Native az deployment group validate `
+    --resource-group $ResourceGroupName `
+    --template-file $script:TemplateFile `
+    --parameters $script:ParametersFile `
+    --only-show-errors
+
+Write-Host ""
+Write-Host "Bicep validation completed."

@@ -711,3 +711,57 @@ No se loggea texto completo de documentos, prompts completos ni secretos. La con
 - `/ready` responde.
 - Upload, analyze y analytics siguen funcionando.
 - Trazas/eventos visibles en Application Insights.
+
+# FASE8 - Bicep IaC
+
+## Estado
+
+Amarillo: infraestructura modelada como codigo, lista para build, validate y what-if antes de cualquier deploy real.
+
+La Fase 8 convierte la infraestructura Azure actual en Bicep para que el entorno sea reproducible y revisable.
+
+## Servicios modelados
+
+- Azure Container Registry.
+- Log Analytics.
+- Application Insights.
+- Azure Storage y Blob Container `documents`.
+- Azure SQL Database.
+- Azure Key Vault.
+- Azure OpenAI.
+- Azure Container Apps Environment.
+- Azure Container App.
+- Role assignments para Managed Identity.
+
+## Archivos principales
+
+```text
+infra/main.bicep
+infra/modules/
+infra/params/dev.bicepparam
+docs/azure-phase-8-bicep-iac.md
+```
+
+## Scripts
+
+```powershell
+.\scripts\azure\phase8-bicep-build.ps1
+.\scripts\azure\phase8-bicep-validate.ps1
+.\scripts\azure\phase8-bicep-whatif.ps1
+.\scripts\azure\phase8-bicep-deploy.ps1
+```
+
+## Seguridad
+
+No se guardan passwords, connection strings ni valores de secrets en el repositorio.
+
+Azure SQL se referencia como recurso existente para evitar rotaciones accidentales de password desde Bicep.
+
+El deploy real pide confirmacion explicita escribiendo `DEPLOY`.
+
+## Validacion esperada
+
+- `az bicep build` compila `infra/main.bicep`.
+- `az deployment group validate` funciona cuando existe `AZURE_SQL_ADMIN_PASSWORD`.
+- `az deployment group what-if` permite revisar cambios antes de desplegar.
+- `pytest`, `ruff` y `pnpm build` siguen pasando.

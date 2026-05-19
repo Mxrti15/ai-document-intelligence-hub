@@ -1,0 +1,32 @@
+using '../main.bicep'
+
+param location = 'swedencentral'
+param environmentName = 'dev'
+
+param acrName = 'acidocintel30929'
+param acrLoginServer = 'acidocintel30929.azurecr.io'
+param logAnalyticsName = 'workspace-rgaidocinteldevpQd6'
+param logAnalyticsCustomerId = '03e615ff-b32b-4a84-99d8-a0440a0d54c2'
+param appInsightsWorkspaceResourceId = '/subscriptions/7d0e447c-06f8-4533-9c87-65540c5c1a0a/resourceGroups/ai_appi-ai-doc-intel-dev_543531e9-779b-4495-9c8e-6bd760915288_managed/providers/Microsoft.OperationalInsights/workspaces/managed-appi-ai-doc-intel-dev-ws'
+param appInsightsName = 'appi-ai-doc-intel-dev'
+param storageAccountName = 'aidocintel30079'
+param storageContainerName = 'documents'
+param sqlServerName = 'aidocsql50478'
+param sqlServerFqdn = 'aidocsql50478.database.windows.net'
+param sqlDatabaseName = 'aidocinteldb'
+param keyVaultName = 'aidockv17882'
+param openAiAccountName = 'aidocopenai78973'
+param openAiEndpoint = 'https://aidocopenai78973.openai.azure.com/'
+param openAiDeploymentName = 'gpt-4o'
+param openAiModelName = 'gpt-4o'
+param openAiModelVersion = '2024-11-20'
+param containerAppsEnvironmentName = 'cae-ai-doc-intel-dev'
+param containerAppName = 'aca-ai-doc-intel-api-dev'
+param containerImage = 'acidocintel30929.azurecr.io/ai-doc-intel-backend:phase7'
+param userAssignedIdentityName = 'id-ai-doc-intel-aca-pull-dev'
+param userAssignedIdentityClientId = '7c8d94f5-a319-483a-b476-69bc61dd03ef'
+
+param sqlAdminUser = 'aidocadmin'
+param appPort = 8000
+param minReplicas = 0
+param maxReplicas = 1
