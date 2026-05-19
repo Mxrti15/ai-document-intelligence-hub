@@ -29,7 +29,6 @@ jobs:
   deploy:
     name: Build, push and update image
     runs-on: ubuntu-latest
-    environment: dev
 
     steps:
       - name: Checkout
