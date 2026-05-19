@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     azure_openai_auth_mode: str = "managed_identity"
     ai_max_input_chars: int = 12000
     ai_max_output_tokens: int = 800
+    applicationinsights_connection_string: str | None = None
+    enable_app_insights: bool = False
+    log_level: str = "INFO"
 
     model_config = SettingsConfigDict(
         env_file=".env",

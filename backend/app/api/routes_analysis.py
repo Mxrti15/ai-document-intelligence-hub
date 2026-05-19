@@ -1,10 +1,13 @@
 import json
+import time
 from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
+from app.core.telemetry import track_event, track_exception, track_metric
 from app.db.database import get_db
 from app.db.models import AIUsage, Document, DocumentAnalysis
 from app.schemas.analysis import AnalyzeDocumentResponse, DocumentAnalysisResponse
@@ -65,6 +68,7 @@ def _save_analysis_result(
 
 
 def _analyze_document(document: Document, db: Session) -> AnalyzeDocumentResponse:
+    started_at = time.perf_counter()
     document.status = "processing"
     db.commit()
     db.refresh(document)
@@ -75,20 +79,71 @@ def _analyze_document(document: Document, db: Session) -> AnalyzeDocumentRespons
         analysis_result = analyze_document_text(text, document.original_filename)
         analysis, usage = _save_analysis_result(document, analysis_result, db)
     except (DocumentParserError, StorageError, OSError) as exc:
+        latency_ms = int((time.perf_counter() - started_at) * 1000)
         document.status = "failed"
         db.commit()
+        track_event(
+            "document_analysis_failed",
+            properties={
+                "document_id": str(document.id),
+                "status": document.status,
+                "error_type": exc.__class__.__name__,
+                "ai_provider": settings.ai_analysis_provider,
+                "storage_mode": settings.storage_mode,
+                "database_mode": settings.database_mode,
+            },
+            measurements={"latency_ms": latency_ms},
+        )
+        track_exception(exc, {"operation": "document_analysis", "document_id": str(document.id)})
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
         ) from exc
     except Exception as exc:
+        latency_ms = int((time.perf_counter() - started_at) * 1000)
         document.status = "failed"
         db.commit()
+        track_event(
+            "document_analysis_failed",
+            properties={
+                "document_id": str(document.id),
+                "status": document.status,
+                "error_type": exc.__class__.__name__,
+                "ai_provider": settings.ai_analysis_provider,
+                "storage_mode": settings.storage_mode,
+                "database_mode": settings.database_mode,
+            },
+            measurements={"latency_ms": latency_ms},
+        )
+        track_exception(exc, {"operation": "document_analysis", "document_id": str(document.id)})
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Document analysis failed.",
         ) from exc
 
+    latency_ms = int((time.perf_counter() - started_at) * 1000)
+    measurements = {
+        "latency_ms": latency_ms,
+        "prompt_tokens": usage["prompt_tokens"],
+        "completion_tokens": usage["completion_tokens"],
+        "total_tokens": usage["total_tokens"],
+        "estimated_cost": usage["estimated_cost"],
+    }
+    track_event(
+        "document_analyzed",
+        properties={
+            "document_id": str(document.id),
+            "document_type": analysis.document_type,
+            "risk_level": analysis.risk_level,
+            "ai_provider": settings.ai_analysis_provider,
+            "storage_mode": settings.storage_mode,
+            "database_mode": settings.database_mode,
+            "status": document.status,
+        },
+        measurements=measurements,
+    )
+    track_metric("analysis_latency_ms", latency_ms, {"document_id": str(document.id)})
+    track_metric("tokens_used_total", usage["total_tokens"], {"document_id": str(document.id)})
     return AnalyzeDocumentResponse(
         document_id=document.id,
         status=document.status,

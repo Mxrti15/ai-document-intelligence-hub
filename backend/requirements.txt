@@ -15,3 +15,7 @@ azure-storage-blob
 azure-identity
 pyodbc
 openai
+azure-monitor-opentelemetry
+opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-requests
+opentelemetry-instrumentation-httpx

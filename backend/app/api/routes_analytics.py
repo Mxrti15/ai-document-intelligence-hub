@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.core.telemetry import track_event
 from app.db.database import get_db
 from app.db.models import AIUsage, Document
 from app.schemas.analytics import UsageSummaryResponse
@@ -18,6 +19,17 @@ def get_usage_summary(db: Session = Depends(get_db)) -> UsageSummaryResponse:
 
     total_tokens = db.query(func.coalesce(func.sum(AIUsage.total_tokens), 0)).scalar()
     estimated_cost = db.query(func.coalesce(func.sum(AIUsage.estimated_cost), 0.0)).scalar()
+
+    track_event(
+        "analytics_requested",
+        measurements={
+            "documents_uploaded": documents_uploaded,
+            "documents_processed": documents_processed,
+            "documents_failed": documents_failed,
+            "total_tokens": total_tokens,
+            "estimated_cost": estimated_cost,
+        },
+    )
 
     return UsageSummaryResponse(
         documents_uploaded=documents_uploaded,

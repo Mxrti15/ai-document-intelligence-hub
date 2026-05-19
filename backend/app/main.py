@@ -3,10 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import routes_analysis, routes_analytics, routes_documents, routes_health
 from app.core.config import settings
+from app.core.logging import configure_logging
+from app.core.telemetry import configure_telemetry
 from app.db.database import init_db
 
 
+configure_logging()
 app = FastAPI(title=settings.app_name)
+configure_telemetry(app)
 
 app.add_middleware(
     CORSMiddleware,

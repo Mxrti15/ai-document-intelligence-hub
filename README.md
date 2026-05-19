@@ -666,3 +666,48 @@ No se guardan passwords ni connection strings en el repositorio ni en outputs. L
 - `/health` responde en Azure.
 - `/ready` responde despues de rotar la password.
 - Upload, analyze y analytics siguen funcionando.
+
+# FASE7 - Application Insights
+
+## Estado
+
+Amarillo: preparada para desplegar y validar.
+
+La Fase 7 anade observabilidad real al backend FastAPI desplegado en Azure Container Apps mediante Azure Application Insights y Azure Monitor.
+
+## Servicios usados
+
+- Azure Application Insights
+- Azure Monitor
+- Azure Container Apps
+- OpenTelemetry
+
+## Que se observa
+
+- requests y errores;
+- latencia;
+- eventos de upload;
+- eventos de analisis documental;
+- llamadas a Azure OpenAI;
+- tokens usados;
+- analytics.
+
+## Scripts
+
+```powershell
+.\scripts\azure\phase7-appinsights-deploy.ps1
+.\scripts\azure\phase7-appinsights-validate.ps1
+```
+
+## Seguridad
+
+No se loggea texto completo de documentos, prompts completos ni secretos. La connection string de Application Insights se configura como secret de Container Apps y no se guarda en outputs.
+
+## Validacion esperada
+
+- Application Insights creado.
+- `ENABLE_APP_INSIGHTS=true` en Azure.
+- `/health` responde.
+- `/ready` responde.
+- Upload, analyze y analytics siguen funcionando.
+- Trazas/eventos visibles en Application Insights.

@@ -7,6 +7,7 @@ from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AzureOpenAI
 
 from app.core.config import settings
+from app.core.telemetry import track_event, track_exception, track_metric
 
 
 PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "azure_openai_document_analysis.txt"
@@ -107,19 +108,50 @@ def analyze_document_with_azure_openai(text: str, filename: str) -> dict[str, An
 
     client = _build_client()
     started_at = time.perf_counter()
-    response = client.chat.completions.create(
-        model=deployment_name,
-        messages=[
-            {"role": "system", "content": _load_system_prompt()},
-            {"role": "user", "content": user_content},
-        ],
-        response_format={"type": "json_object"},
-        max_tokens=settings.ai_max_output_tokens,
-        temperature=0.1,
-    )
+    try:
+        response = client.chat.completions.create(
+            model=deployment_name,
+            messages=[
+                {"role": "system", "content": _load_system_prompt()},
+                {"role": "user", "content": user_content},
+            ],
+            response_format={"type": "json_object"},
+            max_tokens=settings.ai_max_output_tokens,
+            temperature=0.1,
+        )
+    except Exception as exc:
+        latency_ms = int((time.perf_counter() - started_at) * 1000)
+        track_event(
+            "azure_openai_call_failed",
+            properties={
+                "deployment": deployment_name,
+                "api_version": settings.azure_openai_api_version,
+                "auth_mode": settings.azure_openai_auth_mode,
+                "error_type": exc.__class__.__name__,
+            },
+            measurements={"latency_ms": latency_ms},
+        )
+        track_exception(exc, {"operation": "azure_openai_call"})
+        raise
+
     latency_ms = int((time.perf_counter() - started_at) * 1000)
 
     content = response.choices[0].message.content
     analysis = _normalize_analysis(_parse_json_response(content))
     analysis["usage"] = _read_usage(response, latency_ms)
+    track_event(
+        "azure_openai_call_completed",
+        properties={
+            "deployment": deployment_name,
+            "api_version": settings.azure_openai_api_version,
+            "auth_mode": settings.azure_openai_auth_mode,
+        },
+        measurements={
+            "latency_ms": latency_ms,
+            "prompt_tokens": analysis["usage"]["prompt_tokens"],
+            "completion_tokens": analysis["usage"]["completion_tokens"],
+            "total_tokens": analysis["usage"]["total_tokens"],
+        },
+    )
+    track_metric("openai_latency_ms", latency_ms, {"deployment": deployment_name})
     return analysis
