@@ -618,3 +618,51 @@ No se usan API keys ni se guardan secretos en el repositorio. La Container App u
 - `usage.total_tokens` es mayor que 0.
 - Analytics muestra tokens acumulados.
 - Los resultados se guardan en Azure SQL.
+
+# FASE6 - Azure Key Vault
+
+## Estado
+
+Amarillo: preparada para desplegar y validar.
+
+La Fase 6 centraliza el secreto `sql-password` en Azure Key Vault. Azure Container Apps mantiene:
+
+```env
+AZURE_SQL_PASSWORD=secretref:sql-password
+```
+
+pero el secret `sql-password` ya no almacena directamente el valor en Container Apps, sino una referencia a Key Vault consumida mediante Managed Identity.
+
+## Servicios usados
+
+- Azure Key Vault
+- Azure Container Apps
+- Managed Identity
+- Azure RBAC
+- Azure SQL Database
+
+## Flujo
+
+```text
+Container App -> Managed Identity -> Key Vault -> sql-password -> Azure SQL
+```
+
+## Scripts
+
+```powershell
+.\scripts\azure\phase6-keyvault-deploy.ps1
+.\scripts\azure\phase6-keyvault-validate.ps1
+```
+
+## Seguridad
+
+No se guardan passwords ni connection strings en el repositorio ni en outputs. La password de Azure SQL se rota durante el deploy y se guarda como secret en Key Vault.
+
+## Validacion esperada
+
+- Key Vault con RBAC activo.
+- Secret `sql-password` existe en Key Vault.
+- Managed Identity de Container Apps tiene `Key Vault Secrets User`.
+- `/health` responde en Azure.
+- `/ready` responde despues de rotar la password.
+- Upload, analyze y analytics siguen funcionando.
