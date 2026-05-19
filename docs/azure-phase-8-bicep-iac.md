@@ -65,3 +65,7 @@ Sin cambios peligrosos:
 - Key Vault mantiene `softDeleteRetentionInDays = 90`.
 - Container App mantiene `cpu = 0.25` y `memory = 0.5Gi`.
 - Azure SQL no gestiona ni rota passwords desde Bicep.
+
+## Fase 10
+
+Se anade el modulo `infra/modules/search.bicep` para Azure AI Search con SKU `free` por defecto y parametros RAG en Container Apps. No se debe desplegar Bicep sin revisar `what-if`.

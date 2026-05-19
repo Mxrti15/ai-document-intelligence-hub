@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import routes_analysis, routes_analytics, routes_documents, routes_health
+from app.api import routes_analysis, routes_analytics, routes_documents, routes_health, routes_rag
 from app.core.config import settings
 from app.core.logging import configure_logging
 from app.core.telemetry import configure_telemetry
@@ -33,3 +33,4 @@ app.include_router(routes_health.router)
 app.include_router(routes_documents.router)
 app.include_router(routes_analysis.router)
 app.include_router(routes_analytics.router)
+app.include_router(routes_rag.router)

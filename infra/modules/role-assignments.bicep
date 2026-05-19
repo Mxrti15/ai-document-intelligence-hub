@@ -3,11 +3,14 @@ param acrName string
 param storageAccountName string
 param openAiAccountName string
 param keyVaultName string
+param searchServiceName string
 
 var acrPullRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
 var storageBlobDataContributorRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
 var cognitiveServicesOpenAIUserRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
 var keyVaultSecretsUserRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
+var searchIndexDataContributorRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8ebe5a00-799e-43f5-93ac-243d3dce84a7')
+var searchServiceContributorRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7ca78c08-252a-4471-8644-bb5ff32d4ba0')
 
 resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
   name: acrName
@@ -23,6 +26,10 @@ resource openAi 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
   name: keyVaultName
+}
+
+resource search 'Microsoft.Search/searchServices@2023-11-01' existing = {
+  name: searchServiceName
 }
 
 resource acrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
@@ -65,7 +72,29 @@ resource keyVaultSecretsUser 'Microsoft.Authorization/roleAssignments@2022-04-01
   }
 }
 
+resource searchIndexDataContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(search.id, principalId, searchIndexDataContributorRoleDefinitionId)
+  scope: search
+  properties: {
+    principalId: principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: searchIndexDataContributorRoleDefinitionId
+  }
+}
+
+resource searchServiceContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(search.id, principalId, searchServiceContributorRoleDefinitionId)
+  scope: search
+  properties: {
+    principalId: principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: searchServiceContributorRoleDefinitionId
+  }
+}
+
 output acrPullAssignmentId string = acrPull.id
 output storageAssignmentId string = storageBlobDataContributor.id
 output openAiAssignmentId string = openAiUser.id
 output keyVaultAssignmentId string = keyVaultSecretsUser.id
+output searchIndexAssignmentId string = searchIndexDataContributor.id
+output searchServiceAssignmentId string = searchServiceContributor.id

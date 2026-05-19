@@ -18,6 +18,11 @@ param openAiDeploymentName string
 param keyVaultSqlPasswordSecretUri string
 @secure()
 param appInsightsConnectionString string
+param ragEnabled bool = false
+param searchEndpoint string = ''
+param searchServiceName string = ''
+param searchIndexName string = 'document-chunks'
+param embeddingDeploymentName string = ''
 
 resource app 'Microsoft.App/containerApps@2023-05-01' = {
   name: name
@@ -161,6 +166,58 @@ resource app 'Microsoft.App/containerApps@2023-05-01' = {
             {
               name: 'LOG_LEVEL'
               value: 'INFO'
+            }
+            {
+              name: 'RAG_ENABLED'
+              value: string(ragEnabled)
+            }
+            {
+              name: 'AZURE_SEARCH_ENDPOINT'
+              value: searchEndpoint
+            }
+            {
+              name: 'AZURE_SEARCH_SERVICE_NAME'
+              value: searchServiceName
+            }
+            {
+              name: 'AZURE_SEARCH_INDEX_NAME'
+              value: searchIndexName
+            }
+            {
+              name: 'AZURE_SEARCH_AUTH_MODE'
+              value: 'managed_identity'
+            }
+            {
+              name: 'AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME'
+              value: embeddingDeploymentName
+            }
+            {
+              name: 'AZURE_OPENAI_EMBEDDING_DIMENSIONS'
+              value: '1536'
+            }
+            {
+              name: 'RAG_CHUNK_SIZE'
+              value: '1200'
+            }
+            {
+              name: 'RAG_CHUNK_OVERLAP'
+              value: '200'
+            }
+            {
+              name: 'RAG_MAX_CHUNKS_PER_DOCUMENT'
+              value: '80'
+            }
+            {
+              name: 'RAG_TOP_K'
+              value: '5'
+            }
+            {
+              name: 'RAG_MAX_CONTEXT_CHARS'
+              value: '10000'
+            }
+            {
+              name: 'RAG_MAX_OUTPUT_TOKENS'
+              value: '800'
             }
           ]
           resources: {

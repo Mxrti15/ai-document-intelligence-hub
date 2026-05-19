@@ -19,3 +19,4 @@ azure-monitor-opentelemetry
 opentelemetry-instrumentation-fastapi
 opentelemetry-instrumentation-requests
 opentelemetry-instrumentation-httpx
+azure-search-documents

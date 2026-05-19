@@ -20,6 +20,14 @@ param openAiEndpoint string
 param openAiDeploymentName string = 'gpt-4o'
 param openAiModelName string = 'gpt-4o'
 param openAiModelVersion string = '2024-11-20'
+param searchServiceName string
+param searchSkuName string = 'free'
+param searchIndexName string = 'document-chunks'
+param ragEnabled bool = false
+param embeddingDeploymentName string = 'text-embedding-3-small'
+param embeddingModelName string = 'text-embedding-3-small'
+param embeddingModelVersion string = '1'
+param embeddingSkuName string = 'GlobalStandard'
 param containerAppsEnvironmentName string
 param containerAppName string
 param containerImage string
@@ -90,6 +98,26 @@ module openAi 'modules/openai.bicep' = {
   }
 }
 
+module search 'modules/search.bicep' = {
+  name: 'search-${environmentName}'
+  params: {
+    name: searchServiceName
+    location: location
+    skuName: searchSkuName
+  }
+}
+
+module embeddings 'modules/openai-deployment.bicep' = {
+  name: 'openai-embeddings-${environmentName}'
+  params: {
+    accountName: openAiAccountName
+    deploymentName: embeddingDeploymentName
+    modelName: embeddingModelName
+    modelVersion: embeddingModelVersion
+    skuName: embeddingSkuName
+  }
+}
+
 module containerAppsEnv 'modules/container-apps-env.bicep' = {
   name: 'cae-${environmentName}'
   params: {
@@ -126,6 +154,11 @@ module containerApp 'modules/container-app.bicep' = {
     openAiDeploymentName: openAi.outputs.deploymentName
     keyVaultSqlPasswordSecretUri: '${keyVault.outputs.vaultUri}secrets/sql-password'
     appInsightsConnectionString: appInsights.outputs.connectionString
+    ragEnabled: ragEnabled
+    searchEndpoint: search.outputs.searchEndpoint
+    searchServiceName: search.outputs.searchServiceName
+    searchIndexName: searchIndexName
+    embeddingDeploymentName: embeddings.outputs.deploymentName
   }
 }
 
@@ -137,6 +170,7 @@ module roleAssignments 'modules/role-assignments.bicep' = {
     storageAccountName: storageAccountName
     openAiAccountName: openAiAccountName
     keyVaultName: keyVaultName
+    searchServiceName: searchServiceName
   }
 }
 
@@ -146,3 +180,4 @@ output sqlServerFqdn string = sql.outputs.sqlServerFqdn
 output keyVaultName string = keyVault.outputs.keyVaultName
 output appInsightsName string = appInsights.outputs.appInsightsName
 output openAiEndpoint string = openAi.outputs.openAiEndpoint
+output searchEndpoint string = search.outputs.searchEndpoint

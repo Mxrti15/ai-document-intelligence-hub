@@ -824,3 +824,42 @@ AZURE_SUBSCRIPTION_ID
 ```
 
 Son identificadores, no passwords.
+
+# FASE10 - Azure AI Search + RAG
+
+## Estado
+
+Amarillo: backend, UI, scripts y Bicep preparados para RAG. La creacion cloud debe ejecutarse manualmente por coste.
+
+La app permite indexar documentos en Azure AI Search y hacer preguntas RAG usando Azure OpenAI, con citas de chunks y tokens observables.
+
+## Servicios usados
+
+- Azure AI Search.
+- Azure OpenAI embeddings.
+- Azure OpenAI chat.
+- Azure Blob Storage.
+- Azure SQL Database.
+- Application Insights.
+- Managed Identity/RBAC.
+
+## Endpoints
+
+```text
+POST /documents/{document_id}/index
+POST /documents/{document_id}/ask
+POST /chat
+```
+
+## Scripts
+
+```powershell
+.\scripts\azure\phase10-search-rag-deploy.ps1
+.\scripts\azure\phase10-search-rag-validate.ps1
+```
+
+El deploy intenta SKU `free` para Azure AI Search. No pasa a SKU de pago sin `-AllowPaidSku`.
+
+## Seguridad y coste
+
+No se guardan API keys ni secrets. No se ejecuta RAG automaticamente en CI/CD. No se indexan todos los documentos automaticamente.

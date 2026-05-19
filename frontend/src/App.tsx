@@ -9,6 +9,7 @@ import {
 import { AnalysisPanel } from "./components/AnalysisPanel";
 import { AnalyticsPanel } from "./components/AnalyticsPanel";
 import { DocumentsPanel } from "./components/DocumentsPanel";
+import { RagPanel } from "./components/RagPanel";
 import { StatusPanel } from "./components/StatusPanel";
 import { UploadPanel } from "./components/UploadPanel";
 import { ValidationPanel } from "./components/ValidationPanel";
@@ -221,6 +222,8 @@ export default function App() {
         onChanged={refreshDashboard}
         onError={handleError}
       />
+
+      <RagPanel selectedDocument={selectedDocument} onError={handleError} />
 
       <section className="panel-wide">
         <div className="section-heading technical-heading">

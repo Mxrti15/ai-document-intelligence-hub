@@ -56,7 +56,7 @@ export function AnalyticsPanel({ analytics, onError, onRefresh }: AnalyticsPanel
         ))}
       </div>
 
-      <p className="microcopy">Todavia usando analisis mock, sin coste real de IA.</p>
+      {/* <p className="microcopy">Todavia usando analisis mock, sin coste real de IA.</p> */}
     </section>
   );
 }

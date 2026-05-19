@@ -27,6 +27,19 @@ class Settings(BaseSettings):
     applicationinsights_connection_string: str | None = None
     enable_app_insights: bool = False
     log_level: str = "INFO"
+    rag_enabled: bool = False
+    azure_search_endpoint: str | None = None
+    azure_search_service_name: str | None = None
+    azure_search_index_name: str = "document-chunks"
+    azure_search_auth_mode: str = "managed_identity"
+    azure_openai_embedding_deployment_name: str | None = None
+    azure_openai_embedding_dimensions: int = 1536
+    rag_chunk_size: int = 1200
+    rag_chunk_overlap: int = 200
+    rag_max_chunks_per_document: int = 80
+    rag_top_k: int = 5
+    rag_max_context_chars: int = 10000
+    rag_max_output_tokens: int = 800
 
     model_config = SettingsConfigDict(
         env_file=".env",

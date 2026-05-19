@@ -44,6 +44,31 @@ export type UsageAnalytics = {
   estimated_cost: number;
 };
 
+export type RagCitation = {
+  document_id: number;
+  chunk_id: string;
+  filename: string | null;
+  content_preview: string;
+  score: number | null;
+};
+
+export type DocumentIndexResponse = {
+  document_id: number;
+  status: string;
+  chunks_indexed: number;
+  index_name: string;
+  latency_ms: number;
+};
+
+export type RagAnswerResponse = {
+  document_id: number | null;
+  question: string;
+  answer: string;
+  citations: RagCitation[];
+  usage: Record<string, unknown>;
+  latency_ms: number;
+};
+
 async function handleResponse<T>(response: Response): Promise<T> {
   const data = await response.json().catch(() => null);
 
@@ -117,4 +142,27 @@ export async function reprocessDocument(documentId: number): Promise<AnalyzeDocu
 
 export async function getUsageAnalytics(): Promise<UsageAnalytics> {
   return handleResponse(await fetch(`${API_BASE_URL}/analytics/usage`));
+}
+
+export async function indexDocumentForRag(documentId: number): Promise<DocumentIndexResponse> {
+  return handleResponse(
+    await fetch(`${API_BASE_URL}/documents/${documentId}/index`, {
+      method: "POST"
+    })
+  );
+}
+
+export async function askDocument(
+  documentId: number,
+  question: string
+): Promise<RagAnswerResponse> {
+  return handleResponse(
+    await fetch(`${API_BASE_URL}/documents/${documentId}/ask`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ question })
+    })
+  );
 }
